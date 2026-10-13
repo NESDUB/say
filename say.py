@@ -12,8 +12,8 @@
   say --status                           show the saved voice, speed and volume
 
 Voices can be named in full (af_bella) or by name alone (bella). Speech starts while later
-sentences are still being generated. If an app starts recording from a microphone while this
-is speaking (for example a dictation key is pressed), it stops, so it never talks over you.
+sentences are still being generated. On Linux with pactl, a newly appearing microphone
+recording stream stops playback. Other platforms support playback without microphone detection.
 """
 import argparse
 import shutil
@@ -494,8 +494,10 @@ def main():
         if a.no_interrupt:
             args.append("--no-interrupt")
         ticket = take_ticket()                             # keeps the order of repeated --bg calls
+        background_options = ({"creationflags": subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP}
+                              if os.name == "nt" else {"start_new_session": True})
         subprocess.Popen([sys.executable, __file__, *args, "--raw", "--", text], stdin=subprocess.DEVNULL,
-                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **background_options,
                          env=dict(os.environ, SAY_TICKET=str(ticket)))
         return 0
 
